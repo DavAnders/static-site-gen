@@ -18,3 +18,18 @@ class HTMLNode:
         for key, value in self.props.items():
             attrs.append(f'{key}="{value}"')
         return ' '.join(attrs)
+    
+class LeafNode(HTMLNode):
+
+    def __init__(self, tag, value, props=None):
+        if value is None:
+            raise ValueError("LeafNode requires a value")
+        super().__init__(tag=tag, value=value, props=props, children=None)
+    
+    def to_html(self):
+        if self.value is None:
+            raise ValueError("LeafNode requires a value")
+        if self.tag is None:
+            return self.value
+        attrs = f' {self.props_to_html()}' if self.props else ''
+        return f'<{self.tag}{attrs}>{self.value}</{self.tag}>'
