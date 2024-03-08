@@ -1,9 +1,46 @@
 from textnode import TextNode
 from htmlnode import HTMLNode, LeafNode, ParentNode
 from block_markdown import markdown_to_html_node
+from pathlib import Path
 import os
 import shutil
 import re
+
+def generate_pages_recursively(dir_path_content, template_path, dest_dir_path):
+    # ensure destination directory exists
+    os.makedirs(dest_dir_path, exist_ok=True)
+
+    # read the template content once
+    with open(template_path, 'r') as file:
+        template = file.read()
+    
+    # recursively traverse directory
+    for entry in os.listdir(dir_path_content):
+        full_path = os.path.join(dir_path_content, entry)
+        # if entry is a directory, recurse into it
+        if os.path.isdir(full_path):
+            # create a directory in the destination directory
+            dest_subdir_path = os.path.join(dest_dir_path, entry)
+            generate_pages_recursively(full_path, template_path, dest_subdir_path)
+        elif os.path.isfile(full_path) and full_path.endswith('.md'):
+
+            # if entry is markdown file, generate an html page
+            with open(full_path, 'r') as md_file:
+                content = md_file.read()
+
+                # convert md to html
+                html_content = markdown_to_html_node(content).to_html()
+                title = extract_title(content)
+
+                # replace placeholders in template
+                page_html = template.replace("{{ Title }}", title).replace("{{ Content }}", html_content)
+
+                # define destination html file path
+                dest_file_path = os.path.join(dest_dir_path, Path(entry).stem + '.html')
+
+                # write html to destination file
+                with open(dest_file_path, 'w') as html_file:
+                    html_file.write(page_html)
 
 def extract_title(markdown):
     match = re.search(r'^#\s(.+)', markdown, flags=re.MULTILINE)
@@ -62,9 +99,8 @@ def copy_directory_contents(src, dest):
 def main():
     src_directory = "static"  # Source directory
     dest_directory = "public"  # Destination directory
-    content_path = "content/index.md"
+    content_directory = "content"
     template_path = "template.html"
-    destination_path = os.path.join(dest_directory, "index.html")
 
     # Ensure the destination directory (public) is cleared before copying
     if os.path.exists(dest_directory) and os.path.isdir(dest_directory):
@@ -73,7 +109,8 @@ def main():
     copy_directory_contents(src_directory, dest_directory)
     print("Copy operation completed.")
 
-    generate_page(content_path, template_path, destination_path)
+    generate_pages_recursively(content_directory, template_path, dest_directory)
+    print("Pages generated successfully.")
 
 if __name__ == "__main__":
     main()
