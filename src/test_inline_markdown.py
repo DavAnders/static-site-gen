@@ -1,7 +1,74 @@
 import unittest
 from textnode import TextNode, text_type_text, text_type_bold, text_type_italic, text_type_code, text_type_link, text_type_image
-from inline_markdown import split_nodes_delimiter, split_nodes_image, split_nodes_link
-import re
+from inline_markdown import split_nodes_delimiter, split_nodes_image, split_nodes_link, text_to_textnodes
+
+class TestTextToTextNodes(unittest.TestCase):
+
+    def test_plain_text(self):
+        text = "This is plain text."
+        expected = [TextNode(text, text_type_text)]
+        self.assertEqual(text_to_textnodes(text), expected)
+
+    def test_bold_text(self):
+        text = "This is **bold** text."
+        expected = [
+            TextNode("This is ", text_type_text),
+            TextNode("bold", text_type_bold),
+            TextNode(" text.", text_type_text),
+        ]
+        self.assertEqual(text_to_textnodes(text), expected)
+
+    def test_italic_text(self):
+        text = "This is *italic* text."
+        expected = [
+            TextNode("This is ", text_type_text),
+            TextNode("italic", text_type_italic),
+            TextNode(" text.", text_type_text),
+        ]
+        self.assertEqual(text_to_textnodes(text), expected)
+
+    def test_code_text(self):
+        text = "This is `code` text."
+        expected = [
+            TextNode("This is ", text_type_text),
+            TextNode("code", text_type_code),
+            TextNode(" text.", text_type_text),
+        ]
+        self.assertEqual(text_to_textnodes(text), expected)
+
+    def test_image_text(self):
+        text = "This is ![image](https://i.imgur.com/zjjcJKZ.png) text."
+        expected = [
+            TextNode("This is ", text_type_text),
+            TextNode("image", text_type_image, "https://i.imgur.com/zjjcJKZ.png"),
+            TextNode(" text.", text_type_text),
+        ]
+        self.assertEqual(text_to_textnodes(text), expected)
+
+    def test_link_text(self):
+        text = "This is [link](https://boot.dev) text."
+        expected = [
+            TextNode("This is ", text_type_text),
+            TextNode("link", text_type_link, "https://boot.dev"),
+            TextNode(" text.", text_type_text),
+        ]
+        self.assertEqual(text_to_textnodes(text), expected)
+
+    def test_combined_text(self):
+        text = "This is **bold**, *italic*, and `code`."
+        expected = [
+            TextNode("This is ", text_type_text),
+            TextNode("bold", text_type_bold),
+            TextNode(", ", text_type_text),
+            TextNode("italic", text_type_italic),
+            TextNode(", and ", text_type_text),
+            TextNode("code", text_type_code),
+            TextNode(".", text_type_text),
+        ]
+        self.assertEqual(text_to_textnodes(text), expected)
+
+if __name__ == '__main__':
+    unittest.main()
 
 class TestMarkdownSplitting(unittest.TestCase):
 
