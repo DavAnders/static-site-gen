@@ -6,6 +6,7 @@ text_type_italic = "italic"
 text_type_code = "code"
 text_type_link = "link"
 text_type_image = "image"
+text_type_quote = "quote"
 
 def text_node_to_html_node(text_node):
     text_type = text_node.text_type
@@ -29,6 +30,8 @@ def text_node_to_html_node(text_node):
         # convert to leaf with 'img' tag, 'src' and 'alt' props
         props = {'src': text_node.url, 'alt': text_node.text}
         return LeafNode('img', '', props)
+    elif text_type == 'quote':
+        return LeafNode('blockquote', text_node.text)
     else:
         raise ValueError('Invalid text type {}'.format(text_type))
 

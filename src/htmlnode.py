@@ -1,6 +1,8 @@
 class HTMLNode:
 
     def __init__(self, tag=None, value=None, children=None, props=None):
+        if children is None:
+            chilren = []
         # An HTMLNode without a tag will just render as raw text
         self.tag = tag
         # An HTMLNode without a value will be assumed to have children
@@ -48,5 +50,5 @@ class ParentNode(HTMLNode):
             raise ValueError("ParentNode requires a tag")
         if not self.children:
             raise ValueError("ParentNode requires at least one child")
-        children_html = ''.join(child.to_html() for child in self.children)
+        children_html = ''.join(child.to_html() for child in self.children if child is not None)
         return f'<{self.tag}>{children_html}</{self.tag}>'

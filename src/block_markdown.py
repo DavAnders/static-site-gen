@@ -20,35 +20,56 @@ def markdown_to_html_node(markdown):
         elif block_type == block_type_quote:
             html_nodes.append(markdown_to_html_quote(block))
         elif block_type == block_type_unordered_list:
-            html_nodes.append(markdown_to_html_list(block))
+            html_nodes.append(markdown_to_html_list(block, ordered=False))
         elif block_type == block_type_ordered_list:
-            html_nodes.append(markdown_to_html_list(block))
+            html_nodes.append(markdown_to_html_list(block, ordered=True))
         elif block_type == block_type_paragraph:
             html_nodes.append(markdown_to_html_paragraph(block))
     return ParentNode(tag='div', children=html_nodes)
+
+
+def translate_inline_styles(markdown):
+    # Translate images ![alt text](url)
+    markdown = re.sub(r'!\[(.*?)\]\((.*?)\)', r'<img alt="\1" src="\2">', markdown)
+    
+    # Translate links [link text](url)
+    markdown = re.sub(r'\[(.*?)\]\((.*?)\)', r'<a href="\2">\1</a>', markdown)
+    
+    # Translate bold **text**
+    markdown = re.sub(r'\*\*(.*?)\*\*', r'<strong>\1</strong>', markdown)
+    
+    # Translate italic *text*
+    markdown = re.sub(r'\*(.*?)\*', r'<em>\1</em>', markdown)
+
+    return markdown
 
 def markdown_to_html_list(block, ordered=False):
     children = []
     items = block.split('\n')
     for item in items:
+        # remove the list markers depending on ordered or unordered
         if ordered:
-            # replace number and period with nothing
             item_content = re.sub(r"^\d+\.\s", "", item)
-            item_content = item.lstrip('* ').lstrip('- ')
         else:
-            item_content = item.lstrip('* ').lstrip('- ')
-        child = LeafNode('li', item_content)
+            item_content = re.sub(r"^\*\s|\-\s", "", item)
+        html_content = translate_inline_styles(item_content)
+        child = LeafNode('li', html_content)
         children.append(child)
     tag = 'ol' if ordered else 'ul'
     return ParentNode(tag, children=children)
 
 def markdown_to_html_quote(block):
-    content = block.lstrip(">")
-    content = content.strip()
-    return LeafNode("blockquote", content)
+    lines = block.split('\n')
+    # each line, removing '>' and leading/trailing whitespace
+    quote_lines = [line.lstrip("> ").rstrip() for line in lines]
+    # combine lines back into a single string
+    content = ' '.join(quote_lines)
+    html_content = translate_inline_styles(content)
+    return LeafNode("blockquote", html_content)
 
 def markdown_to_html_paragraph(block):
-    return LeafNode("p", block)
+    html_content = translate_inline_styles(block)
+    return LeafNode("p", html_content)
 
 def markdown_to_html_code(block):
     # Regex pattern to match code blocks delimited by triple backticks
@@ -68,7 +89,8 @@ def markdown_to_html_heading(block):
     if match:
         level = len(match.group(1))  # Number of '#' characters
         content = match.group(2).strip()  # Heading text, stripping leading/trailing spaces
-        return LeafNode(tag=f'h{level}', value=content)
+        html_content = translate_inline_styles(content)
+        return LeafNode(tag=f'h{level}', value=html_content)
 
 def markdown_to_blocks(markdown):
     blocks = markdown.split("\n\n")

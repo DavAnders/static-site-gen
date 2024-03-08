@@ -5,7 +5,8 @@ from textnode import (
     text_type_italic,
     text_type_code,
     text_type_image,
-    text_type_link
+    text_type_link,
+    text_type_quote
 )
 import re
 
@@ -16,6 +17,7 @@ def text_to_textnodes(text):
     nodes = split_nodes_delimiter(nodes, "`", text_type_code)
     nodes = split_nodes_image(nodes)
     nodes = split_nodes_link(nodes)
+    nodes = split_nodes_blockquote(nodes)
     return nodes
 
 def split_nodes_image(old_nodes):
@@ -37,6 +39,23 @@ def split_nodes_image(old_nodes):
                 new_nodes.append(TextNode(alt_text, text_type_image, img_url))
             if text_remaining:
                 new_nodes.append(TextNode(text_remaining, text_type_text))
+    return new_nodes
+
+def split_nodes_blockquote(old_nodes):
+    new_nodes = []
+    for node in old_nodes:
+        if node.text_type != text_type_text:
+            new_nodes.append(node)
+            continue
+
+        # Check for blockquote syntax at the start of any line in the text node
+        if node.text.lstrip().startswith('>'):
+            # Here we assume a simple case where the whole text node is a blockquote
+            blockquote_content = node.text.lstrip('> ').strip()
+            new_nodes.append(TextNode(blockquote_content, text_type_quote))
+        else:
+            new_nodes.append(node)
+
     return new_nodes
 
 def split_nodes_link(old_nodes):
