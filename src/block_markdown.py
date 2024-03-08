@@ -57,7 +57,10 @@ def markdown_to_html_code(block):
     if match:
         # Extract the content within the backticks, ignoring any leading/trailing whitespace
         content = match.group(1).strip()
-        return LeafNode(tag='pre', children=[LeafNode(tag='code', value=content)])
+        code_node = LeafNode(tag='code', value=content)
+        return ParentNode(tag='pre', children=[code_node])
+    else:
+        raise ValueError("No code block found.")
 
 def markdown_to_html_heading(block):
     # Regex to capture the heading level and text allowing for extra spaces
